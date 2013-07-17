@@ -241,7 +241,8 @@ def _configureCommon():
         """Return a string identifing the compiler in use"""
         versionStrings = {"Free Software Foundation" : "gcc",
                           "Intel Corporation" : "icc",
-                          "clang version" : "clang"
+                          "clang version" : "clang",
+                          "LLVM" : "clang",
                           }
         context.Message("Checking who built the CC compiler...")
         for string, key in versionStrings.items():
@@ -395,6 +396,9 @@ def _saveState():
     RHL how to get this back from .sconsign.dblite
     """
 
+    if env.GetOption("clean"):
+        return
+
     import ConfigParser
 
     config = ConfigParser.ConfigParser()
@@ -408,7 +412,7 @@ def _saveState():
         with open(confFile, 'wb') as configfile:
             config.write(configfile)
     except Exception, e:
-        print "RHL unexpected exception in _saveState: %s" % e        
+        log.warn("Unexpected exception in _saveState: %s" % e)
         
 _initOptions()
 _initLog()
