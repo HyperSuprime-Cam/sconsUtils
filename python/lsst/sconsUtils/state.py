@@ -106,7 +106,7 @@ def _initEnvironment():
     """Construction and basic setup of the state.env variable."""
 
     ourEnv = {}
-    for key in ('EUPS_DIR', 'EUPS_PATH', 'PATH' ,'DYLD_LIBRARY_PATH', 'LD_LIBRARY_PATH',
+    for key in ('EUPS_DIR', 'EUPS_PATH', 'EUPS_SHELL', 'PATH' ,'DYLD_LIBRARY_PATH', 'LD_LIBRARY_PATH',
                 'SHELL', 'TMPDIR', 'TEMP', 'TMP', 'EUPS_LOCK_PID', 'XPA_PORT'):
         if key in os.environ:
             ourEnv[key] = os.environ[key]
@@ -267,6 +267,9 @@ def _configureCommon():
             elif re.search(r"^clang( |$)", env['cc']):
                 CC = env['cc']
                 CXX = re.sub(r"^clang", "clang++", CC)
+            elif re.search(r"^cc( |$)", env['cc']):
+                CC = env['cc']
+                CXX = re.sub(r"^cc", "c++", CC)
             else:
                 utils.log.fail("Unrecognised compiler:%s" % env['cc'])
             env0 = SCons.Script.Environment()
@@ -282,8 +285,8 @@ def _configureCommon():
     #
     ARCHFLAGS = os.environ.get("ARCHFLAGS", env.get('archflags'))
     if ARCHFLAGS:
-        env.Append(CCFLAGS = [ARCHFLAGS])
-        env.Append(LINKFLAGS = [ARCHFLAGS])
+        env.Append(CCFLAGS = [ARCHFLAGS.split()])
+        env.Append(LINKFLAGS = [ARCHFLAGS.split()])
     # We'll add warning and optimisation options last
     if env['profile'] == '1' or env['profile'] == "pg":
         env.Append(CCFLAGS = ['-pg'])
@@ -309,6 +312,11 @@ def _configureCommon():
             else:
                 log.fail("C++11 extensions could not be enabled for compiler %r" % env.whichCc)
             log.info("Enabling C++11 extensions")
+        else:
+            if env.whichCc == 'clang':
+                # make clang's template depth for C++98/03 equal to GCC's (900)
+	        env.Append(CCFLAGS = ["-ftemplate-depth-900"])
+
     #
     # Is C++'s TR1 available?  If not, use e.g. #include "lsst/tr1/foo.h"
     #
